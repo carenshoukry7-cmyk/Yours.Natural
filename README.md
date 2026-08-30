@@ -30,16 +30,17 @@ One URL serves both roles:
 
 **Faithful to the design:** every color, type choice, spacing rule, the
 real catalogue (names/variants/prices), real review quotes, the exact
-checkout copy and button states, and the client's actual hero and reviews
-background videos.
+checkout copy and button states, the client's actual hero and reviews
+background videos, and — pulled from the brand's asset drive — the real
+logo, hero shot, about-shelves photo, all 8 product photos (with photo
+galleries on the Solid Perfume Stick, Hair Wax Stick, and Sleek Bundle),
+and the three section background photos (about/products/contact).
 
-**Still placeholders**, because the source files didn't include them:
-- Logo image, hero/about/product photos, section background photos
-  (`bg-flatlay`, `bg-palm`, `bg-coconuts`), and review avatars — these
-  render as labeled "Drop a photo" slots (the same graceful-fallback
-  idea the client's own prototype used) rather than being faked. Admin
-  can paste a logo image URL; product/background photos need the real
-  files uploaded to a real host, then swapped in.
+**Still placeholders:**
+- Review avatars — the source files in the drive are 13–17MB each, over
+  the download tool's size limit in this environment. They render as an
+  olive initials circle instead; drop in compressed versions (a few
+  hundred KB) via the admin's asset pipeline to swap them in.
 - No backend yet: orders aren't saved anywhere the owner can review later,
   no order confirmation email, and no WhatsApp order notification. The
   original design brief also asks for a real database, authenticated
@@ -52,5 +53,9 @@ background videos.
 ## Files
 
 - `site/index.html` — the storefront/checkout page, source of truth for
-  the published artifact above. Edit it and republish (via Claude) to
-  update the live link.
+  the published artifact above (photos and videos are inlined directly
+  into it as base64). Edit it and republish (via Claude) to update the
+  live link.
+- `docs/design-handoff/` — the client's original design handoff docs
+  (`README.md`, `PHOTOINDEX.md`) mapping every asset filename to the
+  product/section it belongs to.
