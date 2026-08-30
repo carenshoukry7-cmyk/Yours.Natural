@@ -726,6 +726,7 @@
     view = "checkout";
     $("#view-store").hidden = true;
     $("#view-checkout").hidden = false;
+    if (location.hash !== "#checkout") history.pushState(null, "", "#checkout");
     window.scrollTo(0,0);
     renderCheckout();
   }
@@ -733,8 +734,13 @@
     view = "store";
     $("#view-checkout").hidden = true;
     $("#view-store").hidden = false;
+    if (location.hash === "#checkout") history.pushState(null, "", location.pathname + location.search);
     window.scrollTo(0,0);
   }
+  function applyRouteFromHash(){
+    if (location.hash === "#checkout") goToCheckout(); else backToStore();
+  }
+  window.addEventListener("popstate", applyRouteFromHash);
 
   function placeOrder(){
     var subtotal = cartSubtotal();
@@ -929,6 +935,7 @@
   $("#year").textContent = new Date().getFullYear();
   loadCart();
   renderAll();
+  applyRouteFromHash();
 
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("artifact").then(function(cap){ artifactCap = cap; $("#admin-trigger").hidden = !cap; }).catch(function(){ artifactCap = null; });
