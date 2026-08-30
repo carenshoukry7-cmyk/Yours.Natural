@@ -424,7 +424,8 @@
           <div class="field"><label><span class="field-label">Phone 1</span><input id="a-phone1"></label></div>
           <div class="field"><label><span class="field-label">Phone 2</span><input id="a-phone2"></label></div>
         </div>
-        <div class="field"><label><span class="field-label">Email</span><input id="a-email"></label></div>
+        <div class="field"><label><span class="field-label">Email (shown to customers)</span><input id="a-email"></label></div>
+        <div class="field"><label><span class="field-label">Send orders to (email)</span><input id="a-order-email"></label></div>
       </div>
     </div>
     <div>
@@ -483,7 +484,8 @@
     contactLocation: "Heliopolis — Cairo",
     contactPhone1: "+20 1200 455 560",
     contactPhone2: "+20 1277 153 321",
-    contactEmail: "yoursbrand8@gmail.com",
+    contactEmail: "yours.brand8@gmail.com",
+    orderEmail: "yours.brand8@gmail.com",
     shipping: { "Cairo":50, "Giza":50, "Alexandria":65, "Delta & Canal":75, "Upper Egypt":85, "Red Sea & Sinai":110 },
     products: [
       { id:"oils", tag:"Bestseller", name:"Natural Oils", image:"oils-flatlay", desc:"100% 30 ml natural oils for all body purposes to ensure you have a smooth skin and strong hair.", variantLabel:"Oil type", variants:[
@@ -807,6 +809,34 @@
   }
   window.addEventListener("popstate", applyRouteFromHash);
 
+  function buildOrderEmailHref(ref, subtotal, shipping, total){
+    var lines = cart.map(function(l){
+      var v = (l.scent ? l.scent + " / " : "") + l.variantName;
+      return "- " + l.qty + " x " + l.productName + " (" + v + ") @ " + egp(l.price) + " = " + egp(l.price*l.qty);
+    });
+    var body = [
+      "Order " + ref,
+      "",
+      "Customer: " + checkoutState.fullName,
+      "Phone: " + checkoutState.phone,
+      "Governorate: " + checkoutState.gov,
+      "City/area: " + checkoutState.city,
+      "Address: " + checkoutState.address,
+      checkoutState.notes ? "Notes: " + checkoutState.notes : "",
+      "",
+      "Items:",
+    ].concat(lines).concat([
+      "",
+      "Subtotal: " + egp(subtotal),
+      "Delivery (" + checkoutState.gov + "): " + egp(shipping),
+      "Total due on delivery: " + egp(total),
+      "Payment: Cash on delivery",
+    ]).filter(function(l){ return l !== ""; }).join("\n");
+    var subject = "New order " + ref + " - " + checkoutState.fullName;
+    return "mailto:" + encodeURIComponent(store.orderEmail || store.contactEmail) +
+      "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  }
+
   function placeOrder(){
     var subtotal = cartSubtotal();
     var shipping = store.shipping[checkoutState.gov] || 0;
@@ -814,12 +844,15 @@
     var ref = "YRS-" + Date.now().toString(36).toUpperCase();
     checkoutState.orderRef = ref;
     var firstName = (checkoutState.fullName.trim().split(" ")[0]) || "friend";
+    var mailHref = buildOrderEmailHref(ref, subtotal, shipping, total);
     $("#confirm-panel").innerHTML =
       '<div class="eyebrow" style="margin-bottom:14px;">Order received</div>' +
       "<h3>Thank you, " + esc(firstName) + "</h3>" +
       '<p class="order-ref">Order ' + ref + "</p>" +
-      '<p style="font-size:15.5px;font-weight:300;line-height:1.7;margin:0 0 26px;color:var(--ink85);">Your order is confirmed. Please have <strong style="font-weight:500;">' + egp(total) + '</strong> in cash ready for the courier. We will call ' + esc(checkoutState.phone || "your number") + " to confirm the delivery window.</p>" +
-      '<button type="button" class="btn btn-solid" id="confirm-done" style="padding:14px 36px;font-size:12px;">Done</button>';
+      '<p style="font-size:15.5px;font-weight:300;line-height:1.7;margin:0 0 22px;color:var(--ink85);">Your order is confirmed. Please have <strong style="font-weight:500;">' + egp(total) + '</strong> in cash ready for the courier. We will call ' + esc(checkoutState.phone || "your number") + " to confirm the delivery window.</p>" +
+      '<div style="background:var(--olive-tint);border:1px solid var(--olive-chip);padding:14px 16px;margin:0 0 22px;text-align:left;font-size:13px;color:var(--ink85);">One last step — tap below so we actually receive your order. Nothing is sent automatically yet.</div>' +
+      '<a href="' + mailHref + '" class="btn btn-solid" style="padding:14px 30px;font-size:12px;margin-bottom:10px;">Email us this order</a><br>' +
+      '<button type="button" class="btn btn-outline" id="confirm-done" style="padding:10px 20px;font-size:12px;border:none;text-decoration:underline;">Done</button>';
     openScrim("#confirm-scrim");
     checkoutState.placed = true;
     cart = []; saveCart();
@@ -907,6 +940,7 @@
     $("#a-phone1").value = draft.contactPhone1;
     $("#a-phone2").value = draft.contactPhone2;
     $("#a-email").value = draft.contactEmail;
+    $("#a-order-email").value = draft.orderEmail || draft.contactEmail;
 
     $("#admin-shipping").innerHTML = Object.keys(draft.shipping).map(function(g){
       return '<div class="admin-grid-2" style="align-items:center;margin-bottom:6px;"><span style="font-size:13px;">' + esc(g) + '</span><input type="number" min="0" step="1" data-ship-gov="' + esc(g) + '" value="' + draft.shipping[g] + '"></div>';
@@ -951,6 +985,7 @@
     else if (t.id === "a-phone1") draft.contactPhone1 = t.value;
     else if (t.id === "a-phone2") draft.contactPhone2 = t.value;
     else if (t.id === "a-email") draft.contactEmail = t.value;
+    else if (t.id === "a-order-email") draft.orderEmail = t.value;
     else if (t.dataset.shipGov) draft.shipping[t.dataset.shipGov] = Number(t.value) || 0;
     else if (t.dataset.pfield) {
       var idx = Number(t.dataset.pidx), field = t.dataset.pfield;
